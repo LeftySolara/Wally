@@ -102,6 +102,12 @@ def main():
         print("No destination specified. Aborting...")
         return
 
+    # Create the destination path and parent directories if necessary.
+    path = Path(download_dir + "/images/")
+    path.mkdir(exist_ok=True, parents=True)
+    path = Path(download_dir + "/albums/")
+    path.mkdir(exist_ok=True, parents=True)
+
     album_limit = 5
     album_count = 0
     single_image_limit = 50 # number of images to download that aren't part of an album
@@ -130,13 +136,17 @@ def main():
             if "imgur.com/a/" in post.url and album_count >= album_limit:
                 continue
 
+            print("Downloading imgur post: {}".format(post.title))
             images_downloaded = imgur_client.download(post.url, post.title)
             if images_downloaded == 1:
                 single_image_count += 1
+                print("Downloaded image: {}".format(post.url))
             elif images_downloaded > 1:
                 album_count += 1
+                print("Downloaded album: {}".format(post.url))
         else:
             if single_image_count < single_image_limit:
+                print("Downloading image: {}".format(post.title))
                 filename = create_filename(post.url)
                 destination = destination + download_dir + "/images/" + filename
 
@@ -151,6 +161,7 @@ def main():
                         handle.write(block)
 
                 single_image_count += 1
+                print("Downloaded image: {}".format(post.url))
 
     compress_directory(download_dir + "/images", True)
     for root, dirs, files in os.walk(download_dir + "/albums"):
