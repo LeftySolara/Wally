@@ -8,7 +8,7 @@ and saves them in zip files in the specified directory.
 This script was designed to sit on a server and be executed each week by something like cron.
 
 
-## How to uset this script
+## How to use this script
 
 There are a few things you'll need to run this script:
 
