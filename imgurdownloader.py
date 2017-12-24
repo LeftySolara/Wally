@@ -3,6 +3,7 @@ from imgurpython.helpers.error import ImgurClientError
 from pathlib import Path
 import requests
 
+
 class ImgurDownloader(object):
     """Class for downloading images using the official Imgur API"""
 
@@ -77,7 +78,8 @@ class ImgurDownloader(object):
         path = Path(destination)
         path.mkdir(exist_ok=True, parents=True)
         if not path.exists():
-            print("Error: cannot create destination directory {}".format(destination))
+            print("Error: cannot create destination directory {}".format(
+                destination))
             return
 
         with open(filename, 'wb') as handle:
@@ -95,7 +97,7 @@ class ImgurDownloader(object):
         if "imgur" not in url:
             return ""
 
-        imgur_id = url[url.rfind("/")+1:]
+        imgur_id = url[url.rfind("/") + 1:]
 
         # Remove any file extensions
         extension_index = imgur_id.find(".")
