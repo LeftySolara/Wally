@@ -29,7 +29,6 @@ class ImgurDownloader(object):
             return images_downloaded
 
         try:
-            file_types = (".jpg", ".jpeg", ".png")
             if "imgur.com/a/" in url:
                 album = self.client.get_album(imgur_id)
                 images_downloaded = self.download_album(album, dir_name)
@@ -62,7 +61,6 @@ class ImgurDownloader(object):
         if not destination.endswith("/"):
             destination = destination + "/"
 
-        # Image objects obtained from album.images are dicts instead of image objects
         if type(image) is dict:
             image_id = image["id"]
             image_type = image["type"]

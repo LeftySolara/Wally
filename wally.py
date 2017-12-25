@@ -9,7 +9,6 @@ import os
 from imgurdownloader import ImgurDownloader
 from imgurpython.helpers.error import ImgurClientError
 import praw
-import creds
 
 CONFIG_PATH = "wally.conf"
 STANDALONE_PATH = "/images/"
@@ -46,13 +45,14 @@ def is_desired_post(post):
     return (not (is_request or post.is_self)) and has_approved_host
 
 
-def get_posts():
+def get_posts(config):
     """Fetch a list of links for wallpapers we want."""
     reddit = praw.Reddit(
-        user_agent=creds.user_agent,
-        client_id=creds.reddit_app_id,
-        client_secret=creds.reddit_app_secret)
-    walls = reddit.multireddit(creds.multireddit_owner, creds.multireddit_name)
+        user_agent=config['Reddit']['UserAgent'],
+        client_id=config['Reddit']['RedditAppId'],
+        client_secret=config['Reddit']['RedditSecret'])
+    walls = reddit.multireddit(config['Reddit']['MultiredditOwner'],
+                               config['Reddit']['MultiredditName'])
     top_posts = walls.top("week")
     posts = []
 
@@ -144,7 +144,7 @@ def main():
 
     album_count = 0
     standalone_count = 0
-    posts = get_posts()
+    posts = get_posts(config)
 
     imgur = ImgurDownloader(config['Imgur']['ImgurAppId'],
                             config['Imgur']['ImgurSecret'])
