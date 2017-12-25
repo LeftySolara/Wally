@@ -6,61 +6,13 @@ import time
 import requests
 import os
 
+import redditposts
 from imgurdownloader import ImgurDownloader
 from imgurpython.helpers.error import ImgurClientError
-import praw
 
 CONFIG_PATH = "wally.conf"
 STANDALONE_PATH = "/images/"
 ALBUM_PATH = "/albums/"
-
-def is_desired_post(post):
-    """Determine if a reddit post is a request, self post, or link to a non-approved host.
-
-    -Request posts usually have extra text that needs to be removed from the image.
-    -Fufilled requests require parsing the comments for all edited versions of the image.
-    -All the subs in the multireddit require walls to be in linked posts, so we skip self posts.
-    -The approved hosts are sites that have a consistant pattern in image urls.
-    - We'll also allow any url that is a direct link to an image file.
-    """
-    has_approved_host = False
-    file_types = ("jpg", "jpeg", "png")
-    hosts = [
-        "imgur.com", "iob.imgur.com", "i.imgur.com", "i.redd.it",
-        "i.reddituploads.com", "cdn.awwni.me", "a.pomf.cat"
-    ]
-
-    if any(host in post.url
-           for host in hosts) or post.url.endswith(file_types):
-        has_approved_host = True
-
-    if post.link_flair_text:
-        flair = post.link_flair_text.lower()
-        is_request = ("request" in flair) or ("fulfilled" in flair)
-    else:
-        is_request = False
-
-    is_request = "[request]" in post.title.lower()
-
-    return (not (is_request or post.is_self)) and has_approved_host
-
-
-def get_posts(config):
-    """Fetch a list of links for wallpapers we want."""
-    reddit = praw.Reddit(
-        user_agent=config['Reddit']['UserAgent'],
-        client_id=config['Reddit']['RedditAppId'],
-        client_secret=config['Reddit']['RedditSecret'])
-    walls = reddit.multireddit(config['Reddit']['MultiredditOwner'],
-                               config['Reddit']['MultiredditName'])
-    top_posts = walls.top("week")
-    posts = []
-
-    for post in top_posts:
-        if is_desired_post(post):
-            posts.append(post)
-
-    return posts
 
 
 def create_filename(url):
@@ -144,7 +96,7 @@ def main():
 
     album_count = 0
     standalone_count = 0
-    posts = get_posts(config)
+    posts = redditposts.get_posts(config)
 
     imgur = ImgurDownloader(config['Imgur']['ImgurAppId'],
                             config['Imgur']['ImgurSecret'])
