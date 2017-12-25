@@ -69,7 +69,8 @@ def main():
                 while user_rate_remaining < imgur.minimum_credits:
                     time.sleep(3600)
 
-            # Imgur is the only host providing albums, so that's all we need to worry about
+            # Imgur is the only host providing albums,
+            # so that's all we need to worry about here
             if "imgur.com/a/" in post.url:
                 is_album = imgur.is_album(post.url)
                 if is_album and album_count >= album_limit:
@@ -116,8 +117,8 @@ def main():
                 continue
             filehandler.compress_directory(root, remove)
 
-    print("Downloaded {} standalone images and {} albums.".format(standalone_count,
-                                                       album_count))
+    print("Downloaded {} standalone images and {} albums.".format(
+        standalone_count, album_count))
 
     # show rate limits
     print("\nRate Limits:")

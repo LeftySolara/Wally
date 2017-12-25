@@ -57,7 +57,7 @@ class ImgurDownloader(object):
         return album.images_count
 
     def download_image(self, image, destination="./"):
-        """Download image from url and save it to the given destination."""
+        """Download imgur image and save it to the given destination."""
         if not destination.endswith("/"):
             destination = destination + "/"
 
