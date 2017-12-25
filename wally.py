@@ -166,8 +166,16 @@ def main():
                 while user_rate_remaining < imgur.minimum_credits:
                     time.sleep(3600)
 
-            if "imgur.com/a/" in post.url and album_count >= album_limit:
-                continue
+            # Imgur is the only host providing albums, so that's all we need to worry about
+            if "imgur.com/a/" in post.url:
+                is_album = imgur.is_album(post.url)
+                if is_album and album_count >= album_limit:
+                    continue
+                if not is_album and standalone_count >= standalone_limit:
+                    continue
+            else:
+                if standalone_count >= standalone_limit:
+                    continue
 
             print("Downloading imgur post: {}".format(post.title))
             images_downloaded = imgur.download(post.url, post.title)

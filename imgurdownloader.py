@@ -107,6 +107,16 @@ class ImgurDownloader(object):
 
         return imgur_id
 
+    def is_album(self, url):
+        """Distinguish between "real" albums and those with one image"""
+        album_id = self.get_imgur_id(url)
+        album = self.client.get_album(album_id)
+
+        if album.images_count > 1:
+            return True
+        else:
+            return False
+
     def user_credits(self):
         """Fetch the number of user credits remaining. Use for rate-limiting."""
         return self.client.credits["UserRemaining"]
