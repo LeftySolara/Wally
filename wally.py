@@ -25,8 +25,9 @@ def main():
     album_limit = config['DEFAULT']['AlbumLimit']
     standalone_limit = config['DEFAULT']['StandaloneLimit']
 
-    if download_dir == "":
-        download_dir = str(date.today())
+    if not download_dir.endswith("/"):
+        download_dir += "/"
+    download_dir += str(date.today())
 
     if not str.isdigit(album_limit):
         print("Invalid value for AlbumLimit. Exiting...")
