@@ -11,6 +11,7 @@ class ImgurDownloader(object):
         self.client = ImgurClient(client_id, client_secret)
         self.image_dir = "./images/"
         self.album_dir = "./albums/"
+        self.minimum_credits = 50  # minimum number of rate limit credits remaining before waiting for refresh
 
     def download(self, url, dir_name):
         """Download content from an Imgur url. If the content is an album, save the

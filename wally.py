@@ -1,6 +1,7 @@
 from pathlib import Path
 from datetime import date
 from zipfile import ZipFile, ZIP_DEFLATED
+import configparser
 import time
 import requests
 import os
@@ -10,6 +11,9 @@ from imgurpython.helpers.error import ImgurClientError
 import praw
 import creds
 
+CONFIG_PATH = "wally.conf"
+STANDALONE_PATH = "/images/"
+ALBUM_PATH = "/albums/"
 
 def is_desired_post(post):
     """Determine if a reddit post is a request, self post, or link to a non-approved host.
@@ -107,56 +111,74 @@ def compress_directory(directory, remove=False):
 
 
 def main():
-    download_dir = "" + str(date.today())
+    config = configparser.ConfigParser()
+    with open("wally.conf") as f:
+        config_file = f.readlines()
+        config.read_file(config_file, CONFIG_PATH)
+
+    # Parse the config file. IF any settings are undefined set sane defaults.
+    download_dir = config['DEFAULT']["DownloadDir"]
+    album_limit = config['DEFAULT']['AlbumLimit']
+    standalone_limit = config['DEFAULT']['StandaloneLimit']
 
     if download_dir == "":
-        print("No destination specified. Aborting...")
+        download_dir = str(date.today())
+
+    if not str.isdigit(album_limit):
+        print("Invalid value for AlbumLimit. Exiting...")
         return
 
-    # Create the destination path and parent directories if necessary.
-    path = Path(download_dir + "/images/")
+    if not str.isdigit(standalone_limit):
+        print("Invalid value for StandaloneLimit. Exiting...")
+        return
+
+    album_limit = int(album_limit)
+    standalone_limit = int(standalone_limit)
+
+    # Create the target paths for downloaded images
+    path = Path(download_dir + STANDALONE_PATH)
     path.mkdir(exist_ok=True, parents=True)
-    path = Path(download_dir + "/albums/")
+    path = Path(download_dir + ALBUM_PATH)
     path.mkdir(exist_ok=True, parents=True)
 
-    album_limit = 5
+
     album_count = 0
-    single_image_limit = 50  # number of images to download that aren't part of an album
-    single_image_count = 0
-
+    standalone_count = 0
     posts = get_posts()
-    imgur_client = ImgurDownloader(creds.imgur_app_id, creds.imgur_app_secret)
-    imgur_client.image_dir = download_dir + "/images/"
-    imgur_client.album_dir = download_dir + "/albums/"
-    user_rate_minimum = 50  # number of user credits to check for before waiting for them to reset
+
+    imgur = ImgurDownloader(config['Imgur']['ImgurAppId'],
+                            config['Imgur']['ImgurSecret'])
+    imgur.image_dir = download_dir + STANDALONE_PATH
+    imgur.album_dir = download_dir + ALBUM_PATH
+    imgur.minimum_credits = 50
 
     for post in posts:
 
-        if album_count >= album_limit and single_image_count >= single_image_limit:
+        if album_count >= album_limit and standalone_count >= standalone_limit:
             break
 
         destination = ""
         if "imgur.com" in post.url:
             # check the api rate limit; resets every hour
-            user_rate_remaining = int(imgur_client.user_credits())
-            if user_rate_remaining < user_rate_minimum:
+            user_rate_remaining = int(imgur.user_credits())
+            if user_rate_remaining < imgur.minimum_credits:
                 print("Approaching rate limit. Sleeping until reset...")
-                while user_rate_remaining < user_rate_minimum:
+                while user_rate_remaining < imgur.minimum_credits:
                     time.sleep(3600)
 
             if "imgur.com/a/" in post.url and album_count >= album_limit:
                 continue
 
             print("Downloading imgur post: {}".format(post.title))
-            images_downloaded = imgur_client.download(post.url, post.title)
+            images_downloaded = imgur.download(post.url, post.title)
             if images_downloaded == 1:
-                single_image_count += 1
+                standalone_count += 1
                 print("Downloaded image: {}".format(post.url))
             elif images_downloaded > 1:
                 album_count += 1
                 print("Downloaded album: {}".format(post.url))
         else:
-            if single_image_count < single_image_limit:
+            if standalone_count < standalone_limit:
                 print("Downloading image: {}".format(post.title))
                 filename = create_filename(post.url)
                 destination = destination + download_dir + "/images/" + filename
@@ -171,7 +193,7 @@ def main():
                             break
                         handle.write(block)
 
-                single_image_count += 1
+                standalone_count += 1
                 print("Downloaded image: {}".format(post.url))
 
     compress_directory(download_dir + "/images", True)
@@ -180,12 +202,12 @@ def main():
             continue
         compress_directory(root, True)
 
-    print("Downloaded {} images and {} albums.".format(single_image_count,
+    print("Downloaded {} images and {} albums.".format(standalone_count,
                                                        album_count))
 
     # show rate limits
     print("\nRate Limits:")
-    for key, value in imgur_client.client.credits.items():
+    for key, value in imgur.client.credits.items():
         print("{}: {}".format(key, value))
 
 
