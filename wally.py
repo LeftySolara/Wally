@@ -1,65 +1,17 @@
 from pathlib import Path
 from datetime import date
-from zipfile import ZipFile, ZIP_DEFLATED
 import configparser
 import time
 import requests
 import os
 
 import redditposts
+import filehandler
 from imgurdownloader import ImgurDownloader
-from imgurpython.helpers.error import ImgurClientError
 
 CONFIG_PATH = "wally.conf"
 STANDALONE_PATH = "/images/"
 ALBUM_PATH = "/albums/"
-
-
-def create_filename(url):
-    """Create a filename for an image based on its host."""
-    name = url[url.rfind("/"):] + ".jpg"
-    file_types = (".jpg", ".jpeg", ".png")
-
-    # The ImgurDownloader class names the imgur links itself, so we
-    # don't need to worry about imgur links.
-    if "i.redd.it" in url:
-        name = url[url.rfind("/") + 1:url.rfind(
-            ".")] + " - reddit" + url[url.rfind("."):]
-    elif "i.reddituploads.com" in url:
-        # these urls are super long and don't conatin the image's file extension
-        name = url[url.find(".com/") + 5:url.find("?")] + " - reddit.png"
-    elif "cdn.awwni.me" in url:
-        name = url[url.rfind("/") + 1:url.rfind(
-            ".")] + " - awwnime" + url[url.rfind("."):]
-    elif "a.pomf.cat" in url:
-        name = url[url.rfind("/") + 1:url.rfind(
-            ".")] + " - apomfcat" + url[url.rfind("."):]
-    elif url.endswith(file_types):
-        name = url[url.rfind("/"):]
-
-    return name
-
-
-def compress_directory(directory, remove=False):
-    """Compress the given directory into a zip file. If remove is True, then
-    delete the original directory after compressing."""
-    if directory.endswith("/"):
-        directory = directory[:-1]
-
-    zip_file = ZipFile(directory + ".zip", mode='w', compression=ZIP_DEFLATED)
-    for root, dirs, files in os.walk(directory):
-        rootname = os.path.relpath(root, directory).replace("/", "_")
-        for d in dirs:
-            pass
-        for f in files:
-            abspath = os.path.abspath(directory + "/" + rootname + "/" + f)
-            relpath = os.path.relpath(abspath, directory)
-            zip_file.write(abspath, relpath)
-            if remove:
-                os.remove(abspath)
-        if remove:
-            os.rmdir(root)
-    zip_file.close()
 
 
 def main():
@@ -92,7 +44,6 @@ def main():
     path.mkdir(exist_ok=True, parents=True)
     path = Path(download_dir + ALBUM_PATH)
     path.mkdir(exist_ok=True, parents=True)
-
 
     album_count = 0
     standalone_count = 0
@@ -140,7 +91,7 @@ def main():
         else:
             if standalone_count < standalone_limit:
                 print("Downloading image: {}".format(post.title))
-                filename = create_filename(post.url)
+                filename = filehandler.create_filename(post.url)
                 destination = destination + download_dir + "/images/" + filename
 
                 with open(destination, 'wb') as handle:
@@ -156,13 +107,16 @@ def main():
                 standalone_count += 1
                 print("Downloaded image: {}".format(post.url))
 
-    compress_directory(download_dir + "/images", True)
-    for root, dirs, files in os.walk(download_dir + "/albums"):
-        if os.path.basename(root) == "albums":
-            continue
-        compress_directory(root, True)
+    if config['DEFAULT']['Compress'] == "yes":
+        remove = (config['DEFAULT']['RemoveAfterCompress'] == "yes")
+        filehandler.compress_directory(download_dir + "/images", remove)
 
-    print("Downloaded {} images and {} albums.".format(standalone_count,
+        for root, dirs, files in os.walk(download_dir + "/albums"):
+            if os.path.basename(root) == "albums":
+                continue
+            filehandler.compress_directory(root, remove)
+
+    print("Downloaded {} standalone images and {} albums.".format(standalone_count,
                                                        album_count))
 
     # show rate limits
