@@ -18,7 +18,7 @@ Both can be installed using pip.
 3. A Reddit `client_id`, `client_secret`, and `user_agent`. You can obtain these
 by following Reddit's [first steps guide](https://github.com/reddit/reddit/wiki/OAuth2-Quick-Start-Example#first-steps).
 You'll need your own Reddit account for this.
-4. An Imgur `client_id` and `client_secret`. Get these by following [Imgur's guide](http://api.imgur.com/#registerapp).
+4. An Imgur `client_id` and `client_secret`. Get these by following [Imgur's guide](https://apidocs.imgur.com/#register-an-application-important).
 
 Once you have everything, copy the info into a config file called `wally.conf`
 in the same directory as the python scripts. This repo contains a sample config file with
@@ -82,4 +82,4 @@ The config file allows you to set the number of albums and images to download.
 **Try not to set these too high, or you'll quickly hit Imgur's rate limit.**
 The program checks the rate limit before checking Imgur URLs, but it's still possible
 to hit the limit in the middle of downloading very large albums. You can read
-about Imgur's rate limits [here](http://api.imgur.com/#limits).
+about Imgur's rate limits [here](https://apidocs.imgur.com/#rate-limits).
