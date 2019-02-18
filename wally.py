@@ -14,12 +14,14 @@ CONFIG_PATH = "wally.conf"
 
 def main():
     config = configparser.ConfigParser()
-    with open("wally.conf") as f:
+    with open(CONFIG_PATH) as f:
         config_file = f.readlines()
         config.read_file(config_file, CONFIG_PATH)
 
     # Parse the config file. IF any settings are undefined set sane defaults.
     download_dir = config['DEFAULT']["DownloadDir"]
+    standalone_path = config['DEFAULT']['StandalonePath']
+    album_path = config['DEFAULT']['AlbumPath']
     album_limit = config['DEFAULT']['AlbumLimit']
     standalone_limit = config['DEFAULT']['StandaloneLimit']
 
@@ -39,9 +41,9 @@ def main():
     standalone_limit = int(standalone_limit)
 
     # Create the target paths for downloaded images
-    path = Path(download_dir + config['DEFAULT']['StandalonePath'])
+    path = Path(download_dir + standalone_path)
     path.mkdir(exist_ok=True, parents=True)
-    path = Path(download_dir + config['DEFAULT']['AlbumPath'])
+    path = Path(download_dir + album_path)
     path.mkdir(exist_ok=True, parents=True)
 
     album_count = 0
@@ -50,8 +52,8 @@ def main():
 
     imgur = ImgurDownloader(config['Imgur']['ImgurAppId'],
                             config['Imgur']['ImgurSecret'])
-    imgur.image_dir = download_dir + config['DEFAULT']['StandalonePath']
-    imgur.album_dir = download_dir + config['DEFAULT']['AlbumPath']
+    imgur.image_dir = download_dir + standalone_path
+    imgur.album_dir = download_dir + album_path
     imgur.minimum_credits = 50
 
     for post in posts:
@@ -92,7 +94,7 @@ def main():
             if standalone_count < standalone_limit:
                 print("Downloading image: {}".format(post.title))
                 filename = filehandler.create_filename(post.url)
-                destination = destination + download_dir + "/images/" + filename
+                destination = destination + download_dir + standalone_path + filename
 
                 with open(destination, 'wb') as handle:
                     response = requests.get(post.url, stream=True)
@@ -109,10 +111,10 @@ def main():
 
     if config['DEFAULT']['Compress'] == "yes":
         remove = (config['DEFAULT']['RemoveAfterCompress'] == "yes")
-        filehandler.compress_directory(download_dir + "/images", remove)
+        filehandler.compress_directory(download_dir + standalone_path, remove)
 
-        for root, dirs, files in os.walk(download_dir + "/albums"):
-            if os.path.basename(root) == "albums":
+        for root, dirs, files in os.walk(download_dir + album_path[:-1]):
+            if os.path.basename(root) == album_path[1:-1]:
                 continue
             filehandler.compress_directory(root, remove)
 
