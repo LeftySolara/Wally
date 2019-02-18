@@ -10,8 +10,6 @@ import filehandler
 from imgurdownloader import ImgurDownloader
 
 CONFIG_PATH = "wally.conf"
-STANDALONE_PATH = "/images/"
-ALBUM_PATH = "/albums/"
 
 
 def main():
@@ -41,9 +39,9 @@ def main():
     standalone_limit = int(standalone_limit)
 
     # Create the target paths for downloaded images
-    path = Path(download_dir + STANDALONE_PATH)
+    path = Path(download_dir + config['DEFAULT']['StandalonePath'])
     path.mkdir(exist_ok=True, parents=True)
-    path = Path(download_dir + ALBUM_PATH)
+    path = Path(download_dir + config['DEFAULT']['AlbumPath'])
     path.mkdir(exist_ok=True, parents=True)
 
     album_count = 0
@@ -52,8 +50,8 @@ def main():
 
     imgur = ImgurDownloader(config['Imgur']['ImgurAppId'],
                             config['Imgur']['ImgurSecret'])
-    imgur.image_dir = download_dir + STANDALONE_PATH
-    imgur.album_dir = download_dir + ALBUM_PATH
+    imgur.image_dir = download_dir + config['DEFAULT']['StandalonePath']
+    imgur.album_dir = download_dir + config['DEFAULT']['AlbumPath']
     imgur.minimum_credits = 50
 
     for post in posts:
